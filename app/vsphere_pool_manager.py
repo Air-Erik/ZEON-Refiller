@@ -13,7 +13,7 @@ import uuid
 from typing import Dict, List, Set, Union
 
 from pyVmomi import vim
-from ..source.core.VMware.VSphereManager import (
+from source.core.VMware.VSphereManager import (
     VSphereManager, ensure_vm_connection
 )
 from .config import cfg

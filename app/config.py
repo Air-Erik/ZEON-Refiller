@@ -3,7 +3,7 @@ from pydantic import Field
 from pathlib import Path
 
 
-env_path = Path(__file__).parent.parent.parent / "config" / ".env"
+env_path = Path(__file__).parent.parent / "config" / ".env"
 
 
 class Config(BaseSettings):
@@ -18,7 +18,7 @@ class Config(BaseSettings):
 
     builder_proc: int = Field(2, alias="REFILLER_BUILDER_PROC")
 
-    worker_timeout: int = Field(1800, alias="WORKER_TIMEOUT")                 # сек
+    worker_timeout: int = Field(1800, alias="WORKER_TIMEOUT")
     fault_vm_ttl_minutes: int = Field(60, alias="FAULT_VM_TTL_MINUTES")
 
     vcenter_host: str = Field("", alias="VCENTER_HOST")

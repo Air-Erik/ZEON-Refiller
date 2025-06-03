@@ -7,8 +7,6 @@ from collections import deque
 from typing import Optional
 
 from .core.VMware.BlissOSController import BlissAdbManager
-from .utils.CustomResults import CustomResults
-from .utils.CustomResultsCls import CustomResultsCls
 from .states.Tutorial.InitGame import InitGame
 from .states.FinishState import FinishState
 
@@ -35,10 +33,6 @@ class GameTutorial:
         self.substate = None
 
         self.session_start = datetime.datetime.now().strftime('%Y-%m-%d_%H-%M')
-
-        # Объекты для хранения результатов
-        self.cust_res: Optional[CustomResults] = None
-        self.cust_res_cls: Optional[CustomResultsCls] = None
 
     def __enter__(self):
         self.initialize()

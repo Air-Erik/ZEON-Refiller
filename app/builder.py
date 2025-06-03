@@ -11,8 +11,8 @@ from multiprocessing import Process, Queue
 
 from dotenv import load_dotenv
 
-from ..source.GameTutorial import GameTutorial
-from ..source.BlissInitSetup import BlisInitSetup
+from source.GameTutorial import GameTutorial
+from source.BlissInitSetup import BlisInitSetup
 
 from .config import cfg
 from .logger.logger_setup import setup_vm_logger
