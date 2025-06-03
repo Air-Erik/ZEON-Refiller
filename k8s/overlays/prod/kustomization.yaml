@@ -1,0 +1,22 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: vsphere-config
+data:
+  VS_PHERE_HOST: "prod-vcenter.example.com"
+  VS_PHERE_USER: "prod_user"
+  VS_PHERE_PASSWORD: "prod_password"
+  VS_PHERE_PORT: "443"
+
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: zeon-refiller-deployment
+spec:
+  replicas: 5
+  template:
+    spec:
+      containers:
+        - name: zeon-refiller
+          image: airerik/zeon-refiller:v1.0.0

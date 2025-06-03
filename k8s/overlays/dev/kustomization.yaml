@@ -1,0 +1,7 @@
+namespace: zeon-app-dev
+
+resources:
+  - ../../base
+
+patchesStrategicMerge:
+  - values.yaml

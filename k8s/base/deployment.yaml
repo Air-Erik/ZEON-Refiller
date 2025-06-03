@@ -1,0 +1,33 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: zeon-refiller-deployment
+  labels:
+    app: zeon-refiller
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: zeon-refiller
+  template:
+    metadata:
+      labels:
+        app: zeon-refiller
+    spec:
+      containers:
+        - name: zeon-refiller
+          image: airerik/zeon-refiller:latest
+          imagePullPolicy: IfNotPresent
+          ports:
+            - containerPort: 8000
+          resources:
+            requests:
+              cpu:    "100m"
+              memory: "128Mi"
+            limits:
+              cpu:    "500m"
+              memory: "512Mi"
+          # Тянем ВСЕ переменные из ConfigMap vsphere-config
+          envFrom:
+            - configMapRef:
+                name: vsphere-config
