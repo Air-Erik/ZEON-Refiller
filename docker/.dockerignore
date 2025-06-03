@@ -1,0 +1,8 @@
+# Ignored by Docker build
+.git
+__pycache__
+.venv
+.pytest_cache
+*.pyc
+.DS_Store
+docker-compose.override.yml
