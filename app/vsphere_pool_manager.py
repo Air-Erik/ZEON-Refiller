@@ -13,7 +13,9 @@ import uuid
 from typing import Dict, List, Set, Union
 
 from pyVmomi import vim
-from ..source.core.VMware.VSphereManager import VSphereManager
+from ..source.core.VMware.VSphereManager import (
+    VSphereManager, ensure_vm_connection
+)
 from .config import cfg
 
 
@@ -59,6 +61,7 @@ class VSpherePoolManager(VSphereManager):
         return False
 
     # ─────────── helpers ────────────
+    @ensure_vm_connection
     def _is_vm_in_env_folder(self, vm: vim.VirtualMachine) -> bool:
         current = vm.parent
         while current:
@@ -135,6 +138,7 @@ class VSpherePoolManager(VSphereManager):
         return victims
 
     # ───────── смена статусов ─────────
+    @ensure_vm_connection
     def _rename_with_suffix(
         self, vm_or_name: Union[str, vim.VirtualMachine], new_suffix: str
     ) -> None:
@@ -146,9 +150,11 @@ class VSpherePoolManager(VSphereManager):
         suffix = vm.name.rsplit("_", 1)[-1]
         self.rename_vm(vm, f"[{self._vm_prefix}] {new_suffix}_{suffix}")
 
+    @ensure_vm_connection
     def mark_ready(self, vm_or_name: Union[str, vim.VirtualMachine]) -> None:
         self._rename_with_suffix(vm_or_name, "VM2login")
 
+    @ensure_vm_connection
     def mark_fault(self, vm_or_name: Union[str, vim.VirtualMachine]) -> None:
         self._rename_with_suffix(vm_or_name, "VMError")
 
