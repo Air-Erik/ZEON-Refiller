@@ -1,46 +1,12 @@
 [tool.poetry]
-name = "refiller"
-version = "0.1.0"
+name = "ZEON-Refiller"
+version = "1.0.0"
 description = ""
 authors = ["Air Erik <airerik@yandex.ru>"]
 package-mode = false
 
 [tool.poetry.dependencies]
 python = "^3.11"
-cryptography = "==45.0.3"
-filelock = "==3.18.0"
-ImageHash = "==4.3.1"
-inflection = "==0.5.1"
-numpy = "==2.1.1"
-opencv_python = "==4.10.0.84"
-opencv_python_headless = "==4.10.0.84"
-opensearch_py = "==2.7.1"
-pandas = "==2.2.3"
-paramiko = "==3.4.1"
-Pillow = "==11.2.1"
-PyAutoGUI = "==0.9.54"
-pycryptodomex = "==3.21.0"
-pydantic = "==2.11.5"
-pydantic_settings = "==2.9.1"
-PyGetWindow = "==0.0.9"
-pytesseract = "==0.3.10"
-pytest = "==8.3.3"
-python-dotenv = "==1.1.0"
-python_nmap = "==0.7.1"
-pytz = "==2022.7.1"
-pyVim = "==3.0.3"
-pyvmomi = "==8.0.3.0.1"
-pywin32 = "==306"
-PyYAML = "==6.0.2"
-regex = "==2024.7.24"
-Requests = "==2.32.3"
-Shapely = "==2.1.1"
-SQLAlchemy = "==2.0.36"
-torch = "==2.3.1"
-uiautomator2 = "==3.2.11"
-ultralytics = "==8.3.84"
-WebSocket = "==0.2.1"
-websockets = "==10.4"
 
 
 [build-system]
