@@ -1,60 +1,60 @@
 # syntax=docker/dockerfile:1
-########################################
-# 1. Builder stage: генерируем requirements.txt
-########################################
+#
+# ─────────────────── STAGE: builder ───────────────────
+#
 FROM python:3.11-slim AS builder
 
-RUN apt-get update && apt-get install -y --no-install-recommends \
-    curl \
-    build-essential \
+# 1) Устанавливаем системные утилиты для сборки
+RUN apt-get update \
+    && apt-get install -y --no-install-recommends \
+       curl \
+       build-essential \
     && rm -rf /var/lib/apt/lists/*
 
-# Устанавливаем poetry для экспорта зависимостей
+# 2) Обновляем pip, ставим Poetry 2 и подключаем плагин export
 RUN python -m pip install --upgrade pip \
-    && pip install poetry
+    && curl -sSL https://install.python-poetry.org | python - \
+    && export PATH="/root/.local/bin:$PATH" \
+    && poetry self add poetry-plugin-export
+
+# 3) Делаем так, чтобы во всех следующих шагах PATH уже содержал /root/.local/bin
+ENV PATH="/root/.local/bin:$PATH"
 
 WORKDIR /app
 
-# Копируем только файлы зависимостей
+# 4) Копируем в билд-контекст только файлы с зависимостями
 COPY pyproject.toml poetry.lock ./
 
-# Экспортируем в requirements.txt
+# 5) Экспортируем «главные» зависимости (без dev-группы) в requirements.txt
+#    Используем плагин: вместо '--without-dev' — '--only main'
 RUN poetry export \
       --without-hashes \
       --no-interaction \
       --format requirements.txt \
-      --without-dev \
+      --only main \
       -o requirements.txt
 
-########################################
-# 2. Final stage: собираем минимальный образ
-########################################
+# ─────────────────── STAGE: final ───────────────────
+#
 FROM python:3.11-slim
+
+# 6) Устанавливаем минимальный набор системных библиотек для рантайма
+RUN apt-get update \
+    && apt-get install -y --no-install-recommends \
+       libgl1 \
+       libglib2.0-0 \
+    && rm -rf /var/lib/apt/lists/*
 
 WORKDIR /app
 
-# Системные библиотеки для OpenCV и т.п.
-RUN apt-get update && apt-get install -y --no-install-recommends \
-      libgl1 \
-      libglib2.0-0 \
-    && rm -rf /var/lib/apt/lists/*
-
-# Копируем requirements.txt из builder
-COPY --from=builder /app/requirements.txt .
-
-# Устанавливаем все runtime-зависимости
+# 7) Копируем requirements.txt из builder-стадии и устанавливаем зависимости
+COPY --from=builder /app/requirements.txt ./
 RUN python -m pip install --upgrade pip \
     && pip install --no-cache-dir -r requirements.txt
 
-# Копируем остальной код (app/, source/, config/ и пр.)
+# 8) Копируем весь исходный код проекта
 COPY . .
 
-# При необходимости копируем файл с переменными
-# COPY config/docker.env ./.env
-
-# Экспонируем порт, если ваш сервис слушает (например, 8080)
-# EXPOSE 8080
-
-# Запускаем через точку входа. Можно заменить на «vm-refiller»,
-# если прописали его в pyproject.toml как скрипт
-ENTRYPOINT ["python", "-m", "app"]
+# 9) Определяем команду запуска приложения
+#    Замените "main.py" на вашу реальную точку входа, если она другая
+CMD ["python", "main.py"]
