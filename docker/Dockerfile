@@ -47,14 +47,23 @@ RUN apt-get update \
 
 WORKDIR /app
 
-# 7) Копируем requirements.txt из builder-стадии и устанавливаем зависимости
+# 7) Создаём группу и непривилегированного пользователя appuser
+RUN groupadd --gid 1000 appuser \
+    && useradd --uid 1000 --gid appuser --home-dir /app --shell /sbin/nologin appuser
+
+# 8) Копируем requirements.txt из builder-стадии и устанавливаем зависимости
+WORKDIR /app
 COPY --from=builder /app/requirements.txt ./
 RUN python -m pip install --upgrade pip \
     && pip install --no-cache-dir -r requirements.txt
 
-# 8) Копируем весь исходный код проекта
+# 9) Копируем весь исходный код проекта
 COPY . .
+RUN chown -R 1000:1000 /app
 
-# 9) Определяем команду запуска приложения
+# 10) Переключаемся на непривилегированного пользователя
+USER 1000
+
+# 11) Определяем команду запуска приложения
 #    Замените "main.py" на вашу реальную точку входа, если она другая
 CMD ["python", "main.py"]
