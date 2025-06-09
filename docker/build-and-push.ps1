@@ -31,14 +31,13 @@ param (
     [string]$ImageName = "airerik/zeon-refiller",
 
     [Parameter(Position = 1)]
+    [Alias("Version")]
     [string]$Tag
 )
 
 # Enable BuildKit
 $ErrorActionPreference = "Stop"
 $Env:DOCKER_BUILDKIT = "1"
-
-Write-Host "=== Zeon-Refiller build script started ==="
 
 # ---------- 1. Раскладка путей относительно скрипта -----------------
 $ScriptDir   = $PSScriptRoot                       # …\docker
@@ -52,24 +51,24 @@ if (-not (Test-Path $Dockerfile)) { throw "Dockerfile not found:  $Dockerfile" }
 # ---------- 2. Определяем тег (version) ------------------------------
 if (-not $Tag) {
     Write-Host "Reading version from pyproject.toml ..."
-    $content = Get-Content -Raw -Path $pyproject
+    $content = Get-Content -Raw -Path $PyProject
     $m = [regex]::Match($content, 'version\s*=\s*"(?<ver>[^"]+)"')
     if (-not $m.Success) { throw "Field 'version' not found in pyproject.toml" }
     $Tag = $m.Groups['ver'].Value
 }
 
-Write-Host "Image tags: $ImageName:$Tag  and  $ImageName:latest"
+Write-Host "Image tags: ${ImageName}:$Tag  and  ${ImageName}:latest"
 
 # ---------- 3. Собираем и пушим образ --------------------------------
 Write-Host "Running: docker buildx build ..."
 
 $buildCmd = @(
     "docker", "buildx", "build",
-    "--builder",  "default",             # предполагаем существование builder 'default'
+    "--builder",  "desktop-linux",
     "--platform", "linux/amd64",
     "--file",     "`"$Dockerfile`"",     # экранируем кавычками на случай пробелов
-    "--tag",      "$ImageName:$Tag",
-    "--tag",      "$ImageName:latest",
+    "--tag",      "${ImageName}:$Tag",
+    "--tag",      "${ImageName}:latest",
     "--push",
     "--progress", "plain",
     "`"$RepoRoot`""                      # контекст = весь репозиторий
@@ -82,4 +81,4 @@ iex $buildCmd
 Write-Host "Cleaning buildx cache ..."
 docker buildx prune -f | Out-Null
 
-Write-Host "=== Done. Image $ImageName:$Tag pushed to Docker Hub ==="
+Write-Host "=== Done. Image ${ImageName}:$Tag pushed to Docker Hub ==="
