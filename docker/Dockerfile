@@ -1,69 +1,68 @@
 # syntax=docker/dockerfile:1
-#
-# ─────────────────── STAGE: builder ───────────────────
-#
+# ---------- 1. Стадия builder: собираем зависимости -----------------
 FROM python:3.11-slim AS builder
 
-# 1) Устанавливаем системные утилиты для сборки
+# 0. Установка переменных среды
+# PYTHONDONTWRITEBYTECODE - запрещаем создание *.pyc файлов на диске. Ускоряем сборку
+# PIP_NO_CACHE_DIR - Запрещаем кэш для pip. Иначе кэш пакетов останеться внутри образа
+# POETRY_VIRTUALENVS_CREATE - ставим пакеты сразу в системный site-packages
+ENV PYTHONDONTWRITEBYTECODE=1 \
+    PIP_NO_CACHE_DIR=1 \
+    POETRY_VERSION=2.1.3 \
+    POETRY_VIRTUALENVS_CREATE=false
+
+# 1. Устанавливаем системные утилиты для сборки
+# Обновляем пакеты ОС
+# Компилятор чтобы собирать зависимости-С. Curl нужен для установки Poetry
+# Устанавливем Poetry, не сохраняя кэш
+# Чистим неиспользуемые зависимости и кэш apt
 RUN apt-get update \
     && apt-get install -y --no-install-recommends \
-       curl \
-       build-essential \
-    && rm -rf /var/lib/apt/lists/*
+    && apt-get install -y --no-install-recommends build-essential curl \
+    && pip install --no-cache-dir "poetry==$POETRY_VERSION" \
+    && apt-get purge -y curl \
+    && apt-get autoremove -y \
+    && apt-get clean
 
-# 2) Обновляем pip, ставим Poetry 2 и подключаем плагин export
-RUN python -m pip install --upgrade pip \
-    && curl -sSL https://install.python-poetry.org | python - \
-    && export PATH="/root/.local/bin:$PATH" \
-    && poetry self add poetry-plugin-export
+# 2. Устанавливаем рабочую директорию
+    WORKDIR /src
 
-# 3) Делаем так, чтобы во всех следующих шагах PATH уже содержал /root/.local/bin
-ENV PATH="/root/.local/bin:$PATH"
-
-WORKDIR /app
-
-# 4) Копируем в билд-контекст только файлы с зависимостями
+# 3. Копируем в билд-контекст только файлы с зависимостями
 COPY pyproject.toml poetry.lock ./
 
-# 5) Экспортируем «главные» зависимости (без dev-группы) в requirements.txt
-#    Используем плагин: вместо '--without-dev' — '--only main'
-RUN poetry export \
-      --without-hashes \
-      --no-interaction \
-      --format requirements.txt \
-      --only main \
-      -o requirements.txt
+# 4. Запуск Poetry-установщика зависимостей
+# Только боевые зависимости из группы main
+RUN poetry install --only main --no-root
 
-# ─────────────────── STAGE: final ───────────────────
-#
-FROM python:3.11-slim
+# 5. Копируем весь код приложения
+COPY app ./app
+COPY config ./config
+COPY source ./source
 
-# 6) Устанавливаем минимальный набор системных библиотек для рантайма
-RUN apt-get update \
-    && apt-get install -y --no-install-recommends \
-       libgl1 \
-       libglib2.0-0 \
-    && rm -rf /var/lib/apt/lists/*
+# ---------- 2. Стадия runtime: лёгкий образ для запуска ------------
+FROM python:3.11-slim AS runtime
 
-WORKDIR /app
+# 6. Создаём группу и пользователя без sudo
+RUN groupadd -r appgroup && useradd -r -g appgroup appuser
 
-# 7) Создаём группу и непривилегированного пользователя appuser
-RUN groupadd --gid 1000 appuser \
-    && useradd --uid 1000 --gid appuser --home-dir /app --shell /sbin/nologin appuser
+# 7. Убираем лишнее — только site-packages и приложение
+# Берем скомпилированные пакеты. И не берем компиляторы, установщики pip, Poetry, кэш apt
+COPY --from=builder /usr/local/lib/python3.11/site-packages /usr/local/lib/python3.11/site-packages
+COPY --from=builder /src/app ./app
+COPY --from=builder /src/config ./config
+COPY --from=builder /src/source ./source
 
-# 8) Копируем requirements.txt из builder-стадии и устанавливаем зависимости
-WORKDIR /app
-COPY --from=builder /app/requirements.txt ./
-RUN python -m pip install --upgrade pip \
-    && pip install --no-cache-dir -r requirements.txt
+# 8. Меняем владельца файлов (только нужных директорий, чтобы не трогать системные)
+RUN chown -R appuser:appgroup /usr/local/lib/python3.11/site-packages ./app ./config ./source
 
-# 9) Копируем весь исходный код проекта
-COPY . .
-RUN chown -R 1000:1000 /app
+# 9. Меняем директорию чтобы относительные импорты «видели» пакет app
+WORKDIR /src
 
-# 10) Переключаемся на непривилегированного пользователя
-USER 1000
+# 10. Отключаем бифоризацию по 4кб. Логи приходят мнгновенно. Успевают дойти логи о падении контейнера
+ENV PYTHONUNBUFFERED=1
 
-# 11) Определяем команду запуска приложения
-#    Замените "main.py" на вашу реальную точку входа, если она другая
-CMD ["python", "main.py"]
+# 11. Меняем пользователя от которого стартует контейнер
+USER appuser
+
+# 12. Запускаем приложение
+CMD ["python", "-m", "app"]
