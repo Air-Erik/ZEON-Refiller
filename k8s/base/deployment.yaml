@@ -6,7 +6,7 @@ metadata:
   labels:
     app: zeon-refiller
 spec:
-  replicas: 2
+  replicas: 1
   selector:
     matchLabels:
       app: zeon-refiller
@@ -23,10 +23,8 @@ spec:
 
       containers:
         - name: zeon-refiller
-          image: airerik/zeon-refiller:v1.0.2
+          image: airerik/zeon-refiller:latest
           imagePullPolicy: IfNotPresent
-          ports:
-            - containerPort: 8000
 
           # ─── Указываем, от какого UID запускать контейнер ───
           securityContext:
@@ -37,10 +35,6 @@ spec:
             capabilities:
               drop:
                 - ALL
-
-          envFrom:
-            - configMapRef:
-                name: vsphere-config
 
           resources:
             requests:
