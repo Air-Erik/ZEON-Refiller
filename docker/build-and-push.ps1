@@ -4,27 +4,25 @@
     Build & push a multi-stage Docker image for the Zeon-Refiller project.
 
 .DESCRIPTION
-    • Читает версию из pyproject.toml (если не указан ­-Tag).
-    • Собирает образ через BuildKit / buildx, используя docker/Dockerfile и
-        корень репозитория как контекст.
-    • Тегирует как <ImageName>:<Tag> и <ImageName>:latest, мгновенно пушит
-        в Docker Hub и чистит локальный build-cache.
+    * Reads the version from pyproject.toml (unless -Tag/-Version is provided).
+    * Builds the image via BuildKit/buildx using docker/Dockerfile.
+    * Tags it as <ImageName>:<Tag> and <ImageName>:latest, pushes to Docker Hub,
+        then removes the local buildx cache.
 
 .PARAMETER ImageName
-    Полное имя репозитория Docker Hub (например `airerik/zeon-refiller`).
-    По умолчанию: `airerik/zeon-refiller`.
+    The full repository name on Docker Hub (default: airerik/zeon-refiller).
 
 .PARAMETER Tag
-    Тег образа (версия). Если опущен, извлекается из поля `version`
-    в pyproject.toml.
+    Image tag (version). If omitted, read from pyproject.toml.
+    Alias: -Version
 
 .EXAMPLE
     PS> .\docker\build-and-push.ps1
-    Соберёт и запушит airerik/zeon-refiller:<версия_из_pyproject> и :latest.
+    Builds and pushes airerik/zeon-refiller:<version_from_pyproject> and :latest.
 
 .EXAMPLE
     PS> .\docker\build-and-push.ps1 -ImageName myorg/refiller -Tag v2.0.1
-    Соберёт и запушит myorg/refiller:v2.0.1 и :latest.
+    Builds and pushes myorg/refiller:v2.0.1 and :latest.
 #>
 
 [CmdletBinding()]
@@ -40,7 +38,7 @@ param (
 $ErrorActionPreference = "Stop"
 $Env:DOCKER_BUILDKIT = "1"
 
-Write-Host "🛠  Запуск сборочного скрипта Zeon-Refiller..." -ForegroundColor Cyan
+Write-Host "=== Zeon-Refiller build script started ==="
 
 # ---------- 1. Раскладка путей относительно скрипта -----------------
 $ScriptDir   = $PSScriptRoot                       # …\docker
@@ -48,23 +46,22 @@ $RepoRoot    = (Resolve-Path "$ScriptDir\..").Path # корень проекта
 $pyproject   = Join-Path $RepoRoot  "pyproject.toml"
 $Dockerfile  = Join-Path $ScriptDir "Dockerfile"
 
-if (-not (Test-Path $pyproject))  { throw "pyproject.toml не найден: $pyproject" }
-if (-not (Test-Path $Dockerfile)) { throw "Dockerfile не найден:  $Dockerfile" }
+if (-not (Test-Path $PyProject))  { throw "pyproject.toml not found: $PyProject" }
+if (-not (Test-Path $Dockerfile)) { throw "Dockerfile not found:  $Dockerfile" }
 
 # ---------- 2. Определяем тег (version) ------------------------------
 if (-not $Tag) {
-    Write-Host "🔍  Извлекаем версию из pyproject.toml..." -ForegroundColor Cyan
+    Write-Host "Reading version from pyproject.toml ..."
     $content = Get-Content -Raw -Path $pyproject
     $m = [regex]::Match($content, 'version\s*=\s*"(?<ver>[^"]+)"')
-    if (-not $m.Success) { throw "Поле version не найдено в pyproject.toml" }
+    if (-not $m.Success) { throw "Field 'version' not found in pyproject.toml" }
     $Tag = $m.Groups['ver'].Value
 }
 
-Write-Host "📦  Используем теги: $ImageName:$Tag  и  $ImageName:latest" `
-    -ForegroundColor Green
+Write-Host "Image tags: $ImageName:$Tag  and  $ImageName:latest"
 
 # ---------- 3. Собираем и пушим образ --------------------------------
-Write-Host "🐳  Запускаем docker buildx build..." -ForegroundColor Cyan
+Write-Host "Running: docker buildx build ..."
 
 $buildCmd = @(
     "docker", "buildx", "build",
@@ -78,12 +75,11 @@ $buildCmd = @(
     "`"$RepoRoot`""                      # контекст = весь репозиторий
 ) -join " "
 
-Write-Host $buildCmd -ForegroundColor Yellow
-iex $buildCmd                             # выполняем
+Write-Host $buildCmd
+iex $buildCmd
 
 # ---------- 4. Чистим buildx cache -----------------------------------
-Write-Host "🧹  Очищаем buildx cache..." -ForegroundColor Cyan
+Write-Host "Cleaning buildx cache ..."
 docker buildx prune -f | Out-Null
 
-Write-Host "✅  Готово! Образ $ImageName:$Tag опубликован в Docker Hub." `
-    -ForegroundColor Green
+Write-Host "=== Done. Image $ImageName:$Tag pushed to Docker Hub ==="
