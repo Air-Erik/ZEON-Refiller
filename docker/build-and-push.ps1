@@ -27,12 +27,14 @@
 
 [CmdletBinding()]
 param (
-    [Parameter(Position = 0)]
-    [string]$ImageName = "airerik/zeon-refiller",
+    [Parameter(Mandatory = $true)]
+    [string]$ImageName,
 
-    [Parameter(Position = 1)]
     [Alias("Version")]
-    [string]$Tag
+    [string]$Tag,
+
+    # необязательный builder
+    [string]$Builder
 )
 
 # Enable BuildKit
@@ -57,28 +59,43 @@ if (-not $Tag) {
     $Tag = $m.Groups['ver'].Value
 }
 
-Write-Host "Image tags: ${ImageName}:$Tag  and  ${ImageName}:latest"
+# ---------- 3. Информативная часть -----------------------------------
+Write-Host ""
+Write-Host "============================================================"
+Write-Host "Build & Push Docker Image using BuildKit"
+Write-Host "Project root:   $RepoRoot"
+Write-Host "Dockerfile:     $Dockerfile"
+Write-Host "Image to push:  ${ImageName}:$Tag"
+Write-Host "Additional tag: ${ImageName}:latest"
+if ($Builder) { Write-Host "Builder:        $Builder" }
+Write-Host "============================================================"
+Write-Host ""
 
-# ---------- 3. Собираем и пушим образ --------------------------------
-Write-Host "Running: docker buildx build ..."
-
-$buildCmd = @(
-    "docker", "buildx", "build",
-    "--builder",  "desktop-linux",
+# ---------- 4. Собираем и пушим образ --------------------------------
+$dockerArgs = @(
+    "buildx", "build",
     "--platform", "linux/amd64",
-    "--file",     "`"$Dockerfile`"",     # экранируем кавычками на случай пробелов
-    "--tag",      "${ImageName}:$Tag",
-    "--tag",      "${ImageName}:latest",
+    "--tag", "${ImageName}:$Tag",
+    "--tag", "${ImageName}:latest",
+    "--file", "$Dockerfile",
     "--push",
-    "--progress", "plain",
-    "`"$RepoRoot`""                      # контекст = весь репозиторий
-) -join " "
+    "--progress", "plain"
+)
+if ($Builder) { $dockerArgs += @("--builder", "$Builder") }
+$dockerArgs += "$RepoRoot"
 
-Write-Host $buildCmd
-iex $buildCmd
+Write-Host "Running command:"
+Write-Host "  docker $($dockerArgs -join ' ')"
+Write-Host ""
+
+# ---------- 5. Запуск сборки -----------------------------------------
+& docker @dockerArgs
+if ($LASTEXITCODE -ne 0) {
+    Write-Error "`nBuild or push failed with exit code $LASTEXITCODE."
+    exit $LASTEXITCODE
+}
 
 # ---------- 4. Чистим buildx cache -----------------------------------
-Write-Host "Cleaning buildx cache ..."
-docker buildx prune -f | Out-Null
-
-Write-Host "=== Done. Image ${ImageName}:$Tag pushed to Docker Hub ==="
+Write-Host ""
+Write-Host "Image has been built and pushed successfully: ${ImageName}:$Tag" -ForegroundColor Green
+exit 0
