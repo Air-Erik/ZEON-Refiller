@@ -15,26 +15,23 @@ spec:
       labels:
         app: zeon-refiller
     spec:
-      # ─── Общий securityContext для Pod ───
       securityContext:
         runAsNonRoot: true
-        seccompProfile:
-          type: RuntimeDefault
-
+        fsGroup: 1000
       containers:
         - name: zeon-refiller
-          image: airerik/zeon-refiller:latest
+          image: airerik/zeon-refiller:v1.0.7
           imagePullPolicy: IfNotPresent
 
-          # ─── Указываем, от какого UID запускать контейнер ───
           securityContext:
-            runAsNonRoot: true
             runAsUser: 1000
             runAsGroup: 1000
             allowPrivilegeEscalation: false
             capabilities:
               drop:
                 - ALL
+            seccompProfile:
+              type: RuntimeDefault
 
           resources:
             requests:
