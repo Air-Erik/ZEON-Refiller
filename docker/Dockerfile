@@ -45,7 +45,10 @@ FROM python:3.11.9-slim AS runtime
 # 6. Создаём группу и пользователя без sudo
 RUN groupadd -r appgroup && useradd -r -g appgroup appuser
 
-# 7. Убираем лишнее — только site-packages и приложение
+# 7. Меняем директорию чтобы относительные импорты «видели» пакет app
+WORKDIR /src
+
+# 8. Убираем лишнее — только site-packages и приложение
 # Берем скомпилированные пакеты. И не берем компиляторы, установщики pip, Poetry, кэш apt
 COPY --from=builder /usr/local/lib/python3.11/site-packages /usr/local/lib/python3.11/site-packages
 COPY --from=builder /src/app ./app
@@ -54,9 +57,6 @@ COPY --from=builder /src/source ./source
 
 # 8. Меняем владельца файлов (только нужных директорий, чтобы не трогать системные)
 RUN chown -R appuser:appgroup /usr/local/lib/python3.11/site-packages ./app ./config ./source
-
-# 9. Меняем директорию чтобы относительные импорты «видели» пакет app
-WORKDIR /src
 
 # 10. Отключаем бифоризацию по 4кб. Логи приходят мнгновенно. Успевают дойти логи о падении контейнера
 ENV PYTHONUNBUFFERED=1
