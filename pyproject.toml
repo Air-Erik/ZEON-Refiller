@@ -9,7 +9,6 @@ package-mode = false
 python = "==3.11.9"
 filelock = "==3.18.0"
 numpy = "==2.2.6"
-opencv_python = "==4.10.0.84"
 opencv_python_headless = "==4.10.0.84"
 opensearch_py = "==2.7.1"
 paramiko = "==3.4.1"
