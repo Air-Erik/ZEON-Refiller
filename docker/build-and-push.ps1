@@ -78,8 +78,7 @@ $dockerArgs = @(
     "--tag", "${ImageName}:$Tag",
     "--tag", "${ImageName}:latest",
     "--file", "$Dockerfile",
-    "--push",
-    "--progress", "plain"
+    "--push"
 )
 if ($Builder) { $dockerArgs += @("--builder", "$Builder") }
 $dockerArgs += "$RepoRoot"
