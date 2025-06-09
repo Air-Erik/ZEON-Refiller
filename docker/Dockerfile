@@ -1,6 +1,6 @@
 # syntax=docker/dockerfile:1
 # ---------- 1. Стадия builder: собираем зависимости -----------------
-FROM python:3.11-slim AS builder
+FROM python:3.11.9-slim AS builder
 
 # 0. Установка переменных среды
 # PYTHONDONTWRITEBYTECODE - запрещаем создание *.pyc файлов на диске. Ускоряем сборку
@@ -40,7 +40,7 @@ COPY config ./config
 COPY source ./source
 
 # ---------- 2. Стадия runtime: лёгкий образ для запуска ------------
-FROM python:3.11-slim AS runtime
+FROM python:3.11.9-slim AS runtime
 
 # 6. Создаём группу и пользователя без sudo
 RUN groupadd -r appgroup && useradd -r -g appgroup appuser
