@@ -20,8 +20,8 @@ spec:
         fsGroup: 1000
       containers:
         - name: zeon-refiller
-          image: airerik/zeon-refiller:v1.1.2
-          imagePullPolicy: IfNotPresent
+          image: registry.project.client.loc/zeon/refiller:latest
+          imagePullPolicy: Always
 
           securityContext:
             runAsUser: 1000
