@@ -64,11 +64,17 @@ COPY --from=builder /src/source ./source
 # 10. Меняем владельца файлов (только нужных директорий, чтобы не трогать системные)
 RUN chown -R appuser:appgroup /usr/local/lib/python3.11/site-packages ./app ./config ./source
 
-# 11. Отключаем бифоризацию по 4кб. Логи приходят мнгновенно. Успевают дойти логи о падении контейнера
-ENV PYTHONUNBUFFERED=1
+# 11. Создаём директорию для adb и устанавливаем права
+RUN mkdir -p /home/appuser/.android && chown -R appuser:appgroup /home/appuser/.android
 
-# 12. Меняем пользователя от которого стартует контейнер
+# 12. Отключаем бифоризацию по 4кб. Логи приходят мнгновенно. Успевают дойти логи о падении контейнера
+# Устанавливаем переменные среды для adb
+ENV PYTHONUNBUFFERED=1 \
+    HOME=/home/appuser \
+    ANDROID_USER_HOME=/home/appuser
+
+# 13. Меняем пользователя от которого стартует контейнер
 USER appuser
 
-# 13. Запускаем приложение
+# 14. Запускаем приложение
 CMD ["python", "-m", "app"]
