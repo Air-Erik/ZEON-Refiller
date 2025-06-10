@@ -18,6 +18,7 @@ _NOISY_LIBS = (
     "opensearch",
     "asyncio",
     "filelock",
+    "paramiko"
 )
 
 
