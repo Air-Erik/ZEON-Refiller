@@ -20,7 +20,7 @@ spec:
         fsGroup: 1000
       containers:
         - name: zeon-refiller
-          image: airerik/zeon-refiller:v1.0.7
+          image: airerik/zeon-refiller:v1.0.9
           imagePullPolicy: IfNotPresent
 
           securityContext:

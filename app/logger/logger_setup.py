@@ -73,10 +73,6 @@ def _create_logger(*, index: str, level: int = logging.INFO) -> Tuple[logging.Lo
 
     # ── OpenSearch (хендлер, «сидящий» на ms.…-vms) ─────────────────
     os_handler = OpenSearchMicroserviceHandler(
-        host=os.getenv("OS_HOST", "localhost"),
-        port=int(os.getenv("OS_PORT", "9200")),
-        username=os.getenv("OS_USER", "admin"),
-        password=os.getenv("OS_PASS", "S3cur3P@ssword!"),
         index_name=index,
         vm_index=index.endswith("-vms"),
     )
@@ -90,10 +86,6 @@ def _create_logger(*, index: str, level: int = logging.INFO) -> Tuple[logging.Lo
     root = logging.getLogger()
     if not any(isinstance(h, OpenSearchMicroserviceHandler) for h in root.handlers):
         os_handler_root = OpenSearchMicroserviceHandler(
-            host=os.getenv("OS_HOST", "localhost"),
-            port=int(os.getenv("OS_PORT", "9200")),
-            username=os.getenv("OS_USER", "admin"),
-            password=os.getenv("OS_PASS", "S3cur3P@ssword!"),
             index_name=index,
             vm_index=index.endswith("-vms"),
         )

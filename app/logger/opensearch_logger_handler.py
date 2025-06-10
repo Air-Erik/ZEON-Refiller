@@ -13,10 +13,7 @@ class OpenSearchMicroserviceHandler(logging.Handler):
     """
     def __init__(
         self,
-        host: str = "localhost",
-        port: int = 9200,
-        username: str = "admin",
-        password: str = "S3cur3P@ssword!",
+        hosts: str = "opensearch-lb.opensearch-logger.svc.cluster.local:9200",
         index_name: str = "zeon-refiller-test",
         vm_index: bool = False,
     ):
@@ -25,8 +22,8 @@ class OpenSearchMicroserviceHandler(logging.Handler):
         self.vm_index = vm_index
 
         self.client = OpenSearch(
-            hosts=[{"host": host, "port": port}],
-            http_auth=(username, password),
+            hosts=hosts,
+            http_auth=None,
             use_ssl=False,
             verify_certs=False,
             timeout=30,
