@@ -14,7 +14,7 @@ class BlisInitSetup:
 
     def initialize(self):
         self.adb = BlissAdbManager(adb_ip=self.ip)
-        self.adb.logger = self.logger  
+        self.adb.logger = self.logger
 
         self._initialized = True
         self.logger.info('Тяжёлая инициализация завершена')
@@ -52,9 +52,9 @@ class BlisInitSetup:
         self.text = self.adb.u2_get_all_texts()
         self.logger.debug(f'Тексты на экране: {self.text}')
 
-        self.adb.u2_click_button('START', timeout=60)
+        self.adb.u2_click_button('START', timeout=120)
 
-        self.adb.u2_click_button("Don’t copy", timeout=120)
+        self.adb.u2_click_button("Don’t copy", timeout=360)
         self.adb.u2_click_button('SKIP', timeout=120)
         self.adb.u2_click_button('SKIP', timeout=40)
 
