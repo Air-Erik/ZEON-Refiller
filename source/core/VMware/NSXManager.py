@@ -1,3 +1,5 @@
+import logging
+import socket
 import paramiko
 import time
 import re
@@ -26,18 +28,53 @@ class NSXManager:
         self.client = None
         self.shell = None
 
+        self.logger = logging.getLogger(self.__class__.__name__)
+
+    def close(self):
+        if self.shell:
+            try:
+                self.shell.close()
+            except Exception as e:
+                self.logger.exception('На удалось закрыть канал %s', e)
+            self.shell = None
+        if self.client:
+            try:
+                self.client.close()
+            except Exception as e:
+                self.logger.exception('На удалось закрыть клиент %s', e)
+            self.client = None
+
     def _connect(self):
         """
         Устанавливает SSH-соединение и возвращает клиент и интерактивную оболочку.
         При повторных вызовах переиспользует уже открытое соединение.
         """
-        # <<< ИЗМЕНИЛ: если уже есть активное соединение — возвращаем его
-        if self.client and self.client.get_transport() and self.client.get_transport().is_active():
+        # Если уже есть активный транспорт и открытый канал — возвращаем их
+        if (
+            self.client and
+            self.client.get_transport() and
+            self.client.get_transport().is_active() and
+            self.shell and
+            not getattr(self.shell, 'closed', False)
+        ):
             return self.client, self.shell
 
+        # Иначе пересоздаём соединение
+        self.close()
         client = paramiko.SSHClient()
         client.set_missing_host_key_policy(paramiko.AutoAddPolicy())
-        client.connect(self.host, port=self.port, username=self.username, password=self.password)
+        client.connect(
+            self.host,
+            port=self.port,
+            username=self.username,
+            password=self.password,
+            look_for_keys=False,
+            allow_agent=False,
+            timeout=10
+        )
+        # Настраиваем keepalive, чтобы не разрывалось соединение
+        client.get_transport().set_keepalive(30)
+
         shell = client.invoke_shell()
         # даем времени на загрузку CLI
         time.sleep(1)
@@ -48,33 +85,57 @@ class NSXManager:
 
         return client, shell
 
-    def _find_logical_switch_id(self, shell):
+    def reconnect(self):
+        """
+        Принудительно пересоздать SSH-сессию.
+        """
+        self.close()
+        return self._connect()
+
+    def _send_command(self, command, retry=True):
+        try:
+            client, shell = self._connect()
+            shell.send(command + '\n')
+            time.sleep(0.5)
+            output = ''
+            while shell.recv_ready():
+                output += shell.recv(4096).decode('utf-8', errors='ignore')
+            return output
+        except (OSError, paramiko.SSHException, socket.error) as e:
+            if retry:
+                # При ошибке пробуем пересоздать соединение и повторить
+                self.close()
+                self.logger.exception('Ошибка отправки команды: %s', e)
+                return self._send_command(command, retry=False)
+            else:
+                raise
+
+    def _find_logical_switch_id(self, out):
         """
         Ищет UUID логического переключателя по его имени.
         """
-        shell.send("get logical-switch\n")
-        time.sleep(self.timeout)
-        output = shell.recv(65535).decode('utf-8')
-        for line in output.splitlines():
+        for line in out.splitlines():
             if self.switch_name and self.switch_name in line:
                 parts = line.split()
                 if len(parts) >= 2:
-                    return parts[1]
-        raise ValueError(f"Logical Switch '{self.switch_name}' not found")
+                    find_id = parts[1]
+                    self.logger.info('ID: %s, Logical Switch: %s', find_id, self.switch_name)
+                    return find_id
+        raise ValueError('Logical Switch %s not found', self.switch_name)
 
     def fetch_arp_table(self):
         """
         Получает "сырую" ARP-таблицу через SSH.
         :return: строка вывода команды
         """
-        client, shell = self._connect()
+        # Получаем ID логического свитча
+        cmd_switch = 'get logical-switch'
+        out = self._send_command(cmd_switch)
+        switch_id = self._find_logical_switch_id(out)
 
-        switch_id = self._find_logical_switch_id(shell)
-        cmd = f"get logical-switch {switch_id} arp-table\n"
-        shell.send(cmd)
-        time.sleep(self.timeout)
-        output = shell.recv(65535).decode('utf-8')
-        return output
+        # Получаем ARP-таблицу
+        cmd_arp = f'get logical-switch {switch_id} arp-table'
+        return self._send_command(cmd_arp)
 
     def parse_arp_table(self, raw_output):
         """
@@ -108,20 +169,6 @@ class NSXManager:
         """
         arp = self.get_arp_dict()
         return arp.get(mac_address.lower())
-
-    def close(self):
-        """
-        Закрывает SSH-соединение к NSX Manager.
-        Вызывать при завершении работы с NSXManager.
-        """
-        if self.client:
-            try:
-                self.client.close()
-            except Exception:
-                pass
-            finally:
-                self.client = None
-                self.shell = None
 
 
 if __name__ == "__main__":
