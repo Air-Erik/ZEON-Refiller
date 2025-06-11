@@ -35,12 +35,13 @@ class Config(BaseSettings):
 
     def __init__(self, **values):
         super().__init__(**values)
-        # создаём логгер с именем класса
-        self.logger = logging.getLogger(self.__class__.__name__)
-        self.logger.setLevel(logging.INFO)
-
         # сразу залогируем конфиг
         self.log_config()
+
+    @property
+    def logger(self) -> logging.Logger:
+        """Логгер с именем класса Config."""
+        return logging.getLogger(self.__class__.__name__)
 
     def log_config(self) -> None:
         """
