@@ -1,7 +1,0 @@
-namespace: zeon-app-prod
-
-resources:
-  - ../../base
-
-patchesStrategicMerge:
-  - values.yaml

@@ -1,22 +1,14 @@
-apiVersion: v1
-kind: ConfigMap
-metadata:
-  name: vsphere-config
-data:
-  VS_PHERE_HOST: "prod-vcenter.example.com"
-  VS_PHERE_USER: "prod_user"
-  VS_PHERE_PASSWORD: "prod_password"
-  VS_PHERE_PORT: "443"
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
 
----
-apiVersion: apps/v1
-kind: Deployment
-metadata:
-  name: zeon-refiller-deployment
-spec:
-  replicas: 5
-  template:
-    spec:
-      containers:
-        - name: zeon-refiller
-          image: airerik/zeon-refiller:v1.0.0
+namespace: zeon-refiller
+
+resources:
+  - ../../base
+
+patches:
+  - path: patch-configmap-vm-prefix.yaml
+    # Целевой файл опционален. Но лучше указать
+    target:
+      kind: ConfigMap
+      name: zeon-refiller-config
