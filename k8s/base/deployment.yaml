@@ -40,3 +40,9 @@ spec:
             limits:
               cpu:    "500m"
               memory: "512Mi"
+
+          envFrom:
+            - configMapRef:
+                name: zeon-refiller-config
+            - secretRef:
+                name: zeon-refiller-secret

@@ -1,0 +1,18 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: zeon-refiller-config
+  namespace: zeon-refiller
+data:
+  VCENTER_HOST: "172.16.10.50"
+  VCENTER_PORT: "443"
+  NSX_HOST: "172.16.10.56"
+  NSX_PORT: "22"
+  NSX_SWITCH_NAME: "VIP-VM"
+  VM_PREFIX: "Dev"
+  REFILLER_GOLDEN_VM_NAME: "BlissOS16_GOLD_GO_32"
+  REFILLER_MIN_READY_VM: "2"
+  REFILLER_MAX_READY_VM: "3"
+  REFILLER_BATCH_SIZE: "2"
+  REFILLER_BUILDER_PROC: "2"
+  REFILLER_CHECK_INTERVAL: "300"

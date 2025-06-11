@@ -9,8 +9,6 @@ import asyncio
 import traceback
 from multiprocessing import Process, Queue
 
-from dotenv import load_dotenv
-
 from source.GameTutorial import GameTutorial
 from source.BlissInitSetup import BlisInitSetup
 
@@ -164,8 +162,6 @@ class CloneWorker:
 
     @staticmethod
     def run(task: CloneTask, result_q: Queue) -> None:
-        # дочерний процесс → свои .env & logging
-        load_dotenv(os.path.join(os.path.dirname(__file__), "..", "config", ".env"))
         worker = CloneWorker(task, result_q)
         try:
             worker.prepare_vm()

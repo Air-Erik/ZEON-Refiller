@@ -25,7 +25,7 @@ RUN apt-get update \
     && apt-get clean
 
 # 2. Устанавливаем рабочую директорию
-    WORKDIR /src
+WORKDIR /src
 
 # 3. Копируем в билд-контекст только файлы с зависимостями
 COPY pyproject.toml poetry.lock ./
