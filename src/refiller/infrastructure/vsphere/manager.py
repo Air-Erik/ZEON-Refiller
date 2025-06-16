@@ -16,7 +16,7 @@ from pyVmomi import vim
 from source.core.VMware.VSphereManager import (
     VSphereManager, ensure_vm_connection
 )
-from .config import cfg
+from ...shared.settings import cfg
 
 
 class VSpherePoolManager(VSphereManager):

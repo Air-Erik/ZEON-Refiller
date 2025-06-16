@@ -12,12 +12,12 @@ from multiprocessing import Process, Queue
 from source.GameTutorial import GameTutorial
 from source.BlissInitSetup import BlisInitSetup
 
-from .config import cfg
-from .logger.logger_setup import setup_vm_logger
-from .logger.log_ctx import set_context
-from .tasks import CLONE_QUEUE, CloneTask, WorkerResult
-from .vsphere_pool_manager import VSpherePoolManager
-from .pending_counter import pending
+from ..shared.settings import cfg
+from ..infrastructure.logger.logger_setup import setup_vm_logger
+from ..infrastructure.logger.log_ctx import set_context
+from ..services.tasks import CLONE_QUEUE, CloneTask, WorkerResult
+from ..infrastructure.vsphere.manager import VSpherePoolManager
+from ..shared.pending_counter import pending
 
 logger = logging.getLogger(__name__)
 
