@@ -2,12 +2,12 @@ import asyncio
 import signal
 import logging
 
-from .replenisher import Replenisher
-from .builder import builder_pool
+from ..domain.replenisher import Replenisher
+from ..domain.builder import builder_pool
 from .tasks import CLONE_QUEUE
-from .logger.logger_setup import setup_core_logger
-from .vsphere_pool_manager import VSpherePoolManager
-from .config import cfg
+from ..infrastructure.logger.logger_setup import setup_core_logger
+from ..infrastructure.vsphere.manager import VSpherePoolManager
+from ..shared.settings import cfg
 
 # Уровень логирования CORE
 CORE_LEVEL = 9

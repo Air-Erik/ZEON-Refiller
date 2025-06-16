@@ -3,9 +3,9 @@ import uuid
 import logging
 
 from .pool_interface import IVSpherePoolManager
-from .pending_counter import pending
-from .tasks import CLONE_QUEUE, CloneTask
-from .config import cfg
+from ..shared.pending_counter import pending
+from ..services.tasks import CLONE_QUEUE, CloneTask
+from ..shared.settings import cfg
 
 
 class Replenisher:
